@@ -1,7 +1,7 @@
 // Username.tsx
 import React, { useState } from 'react';
 import { FaCheck, FaArrowRight } from 'react-icons/fa';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 interface UsernameProps {
   goToNextStep: () => void; // Add this line to accept goToNextStep

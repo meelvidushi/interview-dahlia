@@ -1,6 +1,6 @@
 import React from 'react';
 import logo from '../assets/brand/logo.svg'; // Make sure the path to your logo is correct
-import { SignOutButton, SignedIn, SignedOut } from '@clerk/clerk-react';
+import { SignedIn, SignedOut } from '@clerk/clerk-react';
 
 interface HeaderProps {
   progress: number; // Represents the progress percentage (0 to 100)
