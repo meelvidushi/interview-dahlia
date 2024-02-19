@@ -3,17 +3,19 @@ import { useUser } from '@clerk/clerk-react';
 import ClaimUser from './onboarding/ClaimUser';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
+import { useNavigate } from 'react-router-dom';
 
 const Onboarding: React.FC = () => {
   const { isSignedIn } = useUser();
   const [currentStep, setCurrentStep] = useState('claimUser');
+  const navigate = useNavigate();
 
   useEffect(() => {
     // If the user is signed in and on the 'auth' step, move to 'aboutYou'
-    if (isSignedIn && currentStep === 'auth') {
-      setCurrentStep('aboutYou');
+    if (isSignedIn) {
+      navigate('/aboutyou');
     }
-  }, [isSignedIn, currentStep]);
+  }, [isSignedIn, navigate]);
 
   const goToNextStep = () => {
     if (currentStep === 'claimUser') {
@@ -24,14 +26,19 @@ const Onboarding: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col min-h-screen" style={{ backgroundColor: '#FAFAF9' }}>
+    <div
+      className="flex flex-col min-h-screen"
+      style={{ backgroundColor: '#FAFAF9' }}
+    >
       <Header progress={0} />
 
-      {currentStep === 'claimUser' && <ClaimUser goToNextStep={goToNextStep} />}
+      {!isSignedIn && currentStep === 'claimUser' && (
+        <ClaimUser goToNextStep={goToNextStep} />
+      )}
 
       <Footer />
     </div>
   );
-}
+};
 
 export default Onboarding;

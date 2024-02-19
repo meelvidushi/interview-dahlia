@@ -1,26 +1,33 @@
 // Username.tsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FaCheck, FaArrowRight } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 
 interface UsernameProps {
-  goToNextStep: () => void; // Add this line to accept goToNextStep
+  goToNextStep: () => void;
 }
 
 const Username: React.FC<UsernameProps> = ({ goToNextStep }) => {
-  const [username, setUsername] = useState('');
+  const [username, setUsername] = useState<string>(() => {
+    const savedUsername = localStorage.getItem('username');
+    return savedUsername || '';
+  });
 
-  const isUsernameValid = username.length > 3;
-  const navigate = useNavigate()
+  const navigate = useNavigate();
 
-  // Assume this function is called when the username is successfully claimed
+  const isUsernameValid: boolean = username.length > 3;
+
+  useEffect(() => {
+    if (isUsernameValid) {
+      localStorage.setItem('username', username);
+    }
+  }, [username, isUsernameValid]);
+
   const handleClaimUsername = () => {
-    // Logic to claim the username...
-    // If successful, move to the next step
     navigate("/auth");
   };
 
-
+  
   return (
     <div className="flex flex-col items-center justify-center  w-full py-8 px-4"> {/* Added px-4 for padding on the sides on smaller screens */}
       <div className="text-center mb-6 md:mb-8 text-2xl md:text-3xl"> {/* Adjusted margins and text size for smaller screens */}
