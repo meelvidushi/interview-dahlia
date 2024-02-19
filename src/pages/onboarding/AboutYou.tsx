@@ -1,15 +1,97 @@
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useUser } from '@clerk/clerk-react';
 import { useNavigate } from 'react-router-dom'; // Import useNavigate hook
 import { FaArrowRight } from 'react-icons/fa';
 import Footer from '../../components/Footer';
 import Header from '../../components/Header';
 
+const apiKey: string = import.meta.env.VITE_REACT_APP_GOOGLE_MAPS_API_KEY;
+
 // No need to accept goToNextStep as a prop anymore
 const AboutYou: React.FC = () => {
   const { user } = useUser();
   const navigate = useNavigate(); // Initialize useNavigate hook
-  const progress = 20;
+  const [progress, setProgress] = useState<number>(20);
+  const locationInputRef = useRef<HTMLInputElement | null>(null);
+  const userDetailsSent = useRef<boolean>(false);
+
+  useEffect(() => {
+    const loadGoogleMapsScript = (callback: () => void) => {
+      const existingScript = document.getElementById('googleMapsScript');
+      if (!existingScript) {
+        const script = document.createElement('script');
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`;
+        script.id = 'googleMapsScript';
+        document.body.appendChild(script);
+        script.onload = () => {
+          if (callback) callback();
+        };
+      } else if (callback) {
+        callback();
+      }
+    };
+
+    loadGoogleMapsScript(() => {
+      if (window.google && locationInputRef.current) {
+        const autocomplete = new window.google.maps.places.Autocomplete(
+          locationInputRef.current,
+          { types: ['(cities)'] }
+        );
+
+        autocomplete.addListener('place_changed', () => {
+          const place = autocomplete.getPlace();
+          console.log(place);
+        });
+      } else {
+        console.error('Google Maps API failed to load');
+      }
+    });
+  }, []);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (user && !userDetailsSent.current) {
+        const sendUserDetailsToBackend = async () => {
+          const userDetails = {
+            username: localStorage.getItem('username'),
+            clerkUserId: user.id,
+            email: user.primaryEmailAddress?.emailAddress,
+            firstName: user.firstName,
+            lastName: user.lastName,
+          };
+
+          console.log('Sending user details to backend:', userDetails);
+          try {
+            const response = await fetch(
+              'http://localhost:3005/api/usernames/storeUserDetails',
+              {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(userDetails),
+              }
+            );
+
+            const data = await response.json();
+            if (data.success) {
+              console.log('User details successfully stored:', data);
+              localStorage.removeItem('username');
+              userDetailsSent.current = true;
+            } else {
+              console.error('Failed to store user details:', data.message);
+            }
+          } catch (error) {
+            console.error('Error sending user details to backend:', error);
+          }
+        };
+
+        sendUserDetailsToBackend();
+      }
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, [user]);
 
   // Function to handle click event
   const handleContinueClick = () => {
@@ -17,12 +99,17 @@ const AboutYou: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col min-h-screen" style={{ backgroundColor: '#FAFAF9' }}>
+    <div
+      className="flex flex-col min-h-screen"
+      style={{ backgroundColor: '#FAFAF9' }}
+    >
       <Header progress={progress} />
 
       <main className="flex-grow flex items-center justify-center p-8">
         <div className="w-full max-w-lg">
-          <h1 className="text-3xl mb-4 font-medium  text-left">First, let's get to know you</h1>
+          <h1 className="text-3xl mb-4 font-medium  text-left">
+            First, let's get to know you
+          </h1>
 
           <div className="flex mb-4 -mx-2">
             <div className="w-1/2 px-2">
@@ -50,6 +137,7 @@ const AboutYou: React.FC = () => {
           </div>
           <div className="mb-6">
             <input
+              ref={locationInputRef}
               type="text"
               name="location"
               id="location"
